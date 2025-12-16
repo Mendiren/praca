@@ -1,332 +1,366 @@
-import React, { useState, useEffect } from 'react';
-import { Bot, ArrowRight, PlayCircle, CheckCircle, Play, Check, X, FileSpreadsheet } from 'lucide-react';
-
-// --- DANE QUIZU (20 PYTAŃ) ---
-const QUIZ_DATA = [
-    // Typ: single-image (Czy to AI?)
-    { id: 1, type: 'single-image', question: 'Czy to zdjęcie przedstawia prawdziwą osobę?', correct: 'ai', src: 'https://placehold.co/600x400/2563eb/FFF?text=Twarz+Kobiety+(Placeholder)', label: 'Twarz Kobiety' },
-    { id: 2, type: 'single-image', question: 'Czy ten krajobraz jest generowany przez AI?', correct: 'real', src: 'https://placehold.co/600x400/16a34a/FFF?text=Las+Deszczowy+(Placeholder)', label: 'Las Deszczowy' },
-    { id: 3, type: 'single-image', question: 'Czy ten obraz to sztuka cyfrowa czy AI?', correct: 'ai', src: 'https://placehold.co/600x400/9333ea/FFF?text=Abstrakcja+(Placeholder)', label: 'Abstrakcja' },
-    { id: 4, type: 'single-image', question: 'Prawdziwe zdjęcie czy wygenerowane?', correct: 'ai', src: 'https://placehold.co/600x400/ea580c/FFF?text=Samochód+Przyszłości', label: 'Futurystyczne Auto' },
-    { id: 5, type: 'single-image', question: 'Czy to zdjęcie z wakacji jest prawdziwe?', correct: 'real', src: 'https://placehold.co/600x400/0ea5e9/FFF?text=Plaża', label: 'Plaża' },
-
-    // Typ: compare-image (Które to AI?)
-    { id: 6, type: 'compare-image', question: 'Które zdjęcie psa zostało wygenerowane przez AI?', correct: 'left', srcLeft: 'https://placehold.co/400x400/f59e0b/FFF?text=Pies+A+(AI)', srcRight: 'https://placehold.co/400x400/84cc16/FFF?text=Pies+B+(Real)', label: 'Psy' },
-    { id: 7, type: 'compare-image', question: 'Wskaż prawdziwe zdjęcie architektury.', correct: 'right', srcLeft: 'https://placehold.co/400x400/64748b/FFF?text=Budynek+A+(AI)', srcRight: 'https://placehold.co/400x400/475569/FFF?text=Budynek+B+(Real)', label: 'Budynki' },
-    { id: 8, type: 'compare-image', question: 'Który portret jest prawdziwy?', correct: 'left', srcLeft: 'https://placehold.co/400x400/ec4899/FFF?text=Portret+A+(Real)', srcRight: 'https://placehold.co/400x400/d946ef/FFF?text=Portret+B+(AI)', label: 'Portrety' },
-    { id: 9, type: 'compare-image', question: 'Które jedzenie to AI?', correct: 'right', srcLeft: 'https://placehold.co/400x400/ef4444/FFF?text=Pizza+A+(Real)', srcRight: 'https://placehold.co/400x400/f97316/FFF?text=Pizza+B+(AI)', label: 'Jedzenie' },
-    { id: 10, type: 'compare-image', question: 'Wskaż zdjęcie wygenerowane przez Midjourney.', correct: 'left', srcLeft: 'https://placehold.co/400x400/14b8a6/FFF?text=Krajobraz+A+(AI)', srcRight: 'https://placehold.co/400x400/06b6d4/FFF?text=Krajobraz+B+(Real)', label: 'Góry' },
-
-    // Typ: single-video (Deepfake czy nie?)
-    { id: 11, type: 'single-video', question: 'Czy ta wypowiedź polityka to Deepfake?', correct: 'deepfake', src: 'https://placehold.co/600x400/000000/FFF?text=VIDEO:+Wypowiedź+Polityka', label: 'Wideo Polityka' },
-    { id: 12, type: 'single-video', question: 'Czy ten film z celebrytą jest prawdziwy?', correct: 'real', src: 'https://placehold.co/600x400/333333/FFF?text=VIDEO:+Wywiad', label: 'Wywiad TV' },
-    { id: 13, type: 'single-video', question: 'Czy to nagranie z monitoringu jest autentyczne?', correct: 'real', src: 'https://placehold.co/600x400/111111/FFF?text=VIDEO:+CCTV', label: 'Kamera CCTV' },
-    { id: 14, type: 'single-video', question: 'Deepfake czy prawdziwe nagranie TikTok?', correct: 'deepfake', src: 'https://placehold.co/600x400/222222/FFF?text=VIDEO:+TikTok+Taniec', label: 'TikTok' },
-    { id: 15, type: 'single-video', question: 'Czy ten lektor to synteza mowy (AI)?', correct: 'ai-voice', src: 'https://placehold.co/600x400/444444/FFF?text=AUDIO/VIDEO:+Lektor', label: 'Reklama' },
-
-    // Typ: compare-video (Które to AI?)
-    { id: 16, type: 'compare-video', question: 'Które wideo przedstawia prawdziwego człowieka?', correct: 'left', srcLeft: 'https://placehold.co/400x300/000/FFF?text=Vid+A+(Real)', srcRight: 'https://placehold.co/400x300/111/FFF?text=Vid+B+(AI)', label: 'Prezenterzy' },
-    { id: 17, type: 'compare-video', question: 'Która animacja została stworzona przez AI?', correct: 'right', srcLeft: 'https://placehold.co/400x300/222/FFF?text=Anim+A+(Ręczna)', srcRight: 'https://placehold.co/400x300/333/FFF?text=Anim+B+(Sora/AI)', label: 'Animacja' },
-    { id: 18, type: 'compare-video', question: 'Wskaż Deepfake.', correct: 'right', srcLeft: 'https://placehold.co/400x300/444/FFF?text=Vid+A+(Real)', srcRight: 'https://placehold.co/400x300/555/FFF?text=Vid+B+(Deepfake)', label: 'Aktorzy' },
-    { id: 19, type: 'compare-video', question: 'Który głos lektora jest ludzki?', correct: 'left', srcLeft: 'https://placehold.co/400x300/666/FFF?text=Audio+A+(Ludzki)', srcRight: 'https://placehold.co/400x300/777/FFF?text=Audio+B+(ElevenLabs)', label: 'Audiobook' },
-    { id: 20, type: 'compare-image', question: 'Ostatnie pytanie: Które zdjęcie profilowe jest fałszywe?', correct: 'right', srcLeft: 'https://placehold.co/400x400/888/FFF?text=Profil+A+(Real)', srcRight: 'https://placehold.co/400x400/999/FFF?text=Profil+B+(GAN)', label: 'LinkedIn' },
-];
-
-const IntroForm = ({ onStart }) => {
-    const [formData, setFormData] = useState({ firstName: '', lastName: '', age: '' });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (formData.firstName && formData.lastName && formData.age) {
-            onStart(formData);
-        }
-    };
-
-    return (
-        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 animate-[fadeIn_0.5s_ease-in-out] text-center max-w-lg mx-auto mt-10">
-            <div className="mb-6 flex justify-center text-blue-400">
-                <Bot size={64} />
-            </div>
-            <h1 className="text-3xl font-bold mb-2 text-white">Test: Człowiek czy AI?</h1>
-            <p className="text-slate-400 mb-8">Sprawdź, czy potrafisz odróżnić rzeczywistość od fikcji. 20 pytań.</p>
-            
-            <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Imię</label>
-                    <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
-                        placeholder="Wpisz imię"
-                        value={formData.firstName}
-                        onChange={e => setFormData({...formData, firstName: e.target.value})}
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Nazwisko</label>
-                    <input 
-                        type="text" 
-                        required
-                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
-                        placeholder="Wpisz nazwisko"
-                        value={formData.lastName}
-                        onChange={e => setFormData({...formData, lastName: e.target.value})}
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Wiek</label>
-                    <input 
-                        type="number" 
-                        required
-                        min="5" max="100"
-                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
-                        placeholder="Wpisz wiek"
-                        value={formData.age}
-                        onChange={e => setFormData({...formData, age: e.target.value})}
-                    />
-                </div>
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition transform hover:scale-105 mt-4 flex items-center justify-center">
-                    Rozpocznij Test <ArrowRight className="ml-2" />
-                </button>
-            </form>
-        </div>
-    );
-};
-
-const QuizQuestion = ({ data, currentNum, totalNum, onAnswer }) => {
-    const renderContent = () => {
-        if (data.type === 'single-image' || data.type === 'single-video') {
-            const isVideo = data.type === 'single-video';
-            return (
-                <div className="flex flex-col items-center">
-                    <div className="relative w-full max-w-lg mb-6 rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg group bg-slate-900">
-                        <img src={data.src} alt="Test media" className="w-full h-auto object-cover opacity-90" />
-                        {isVideo && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                <PlayCircle size={64} className="text-white/80" />
-                            </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 bg-black/70 px-3 py-1 text-xs text-white">Przykład #{data.id}</div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-                        <button onClick={() => onAnswer('real')} className="bg-green-600/20 border-2 border-green-600 hover:bg-green-600 hover:text-white text-green-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
-                            <CheckCircle size={28} />
-                            <span>Prawdziwe</span>
-                        </button>
-                        <button onClick={() => onAnswer(data.type === 'single-video' ? 'deepfake' : 'ai')} className="bg-purple-600/20 border-2 border-purple-600 hover:bg-purple-600 hover:text-white text-purple-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
-                            <Bot size={28} />
-                            <span>{data.type === 'single-video' ? 'Deepfake/AI' : 'AI Generowane'}</span>
-                        </button>
-                    </div>
-                </div>
-            );
-        } 
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Rozpoznawania AI</title>
+    
+    <!-- React & ReactDOM (Silnik aplikacji) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (Tłumacz kodu w przeglądarce) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS (Wygląd) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Ikony FontAwesome (Działają bez importów) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
         
-        else if (data.type === 'compare-image' || data.type === 'compare-video') {
-            const isVideo = data.type === 'compare-video';
-            return (
-                <div className="flex flex-col items-center w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
-                        {/* Opcja Lewa */}
-                        <div onClick={() => onAnswer('left')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
-                            <img src={data.srcLeft} className="w-full h-48 md:h-64 object-cover" />
-                            {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><Play size={40} className="text-white" /></div>}
-                            <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">A</div>
-                            <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
-                        </div>
+        /* Animacje */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-                        {/* Opcja Prawa */}
-                        <div onClick={() => onAnswer('right')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
-                            <img src={data.srcRight} className="w-full h-48 md:h-64 object-cover" />
-                            {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><Play size={40} className="text-white" /></div>}
-                            <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">B</div>
-                            <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
-                        </div>
-                    </div>
-                    <p className="text-slate-400 text-sm mb-2">Kliknij na obrazek/film, który Twoim zdaniem pasuje do pytania.</p>
-                </div>
-            );
-        }
-    };
+    <!-- Kontener aplikacji -->
+    <div id="root" class="w-full flex justify-center"></div>
 
-    return (
-        <div className="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl border border-slate-700 w-full animate-[fadeIn_0.5s_ease-in-out] mt-6">
-            <div className="flex justify-between items-center mb-6">
-                <span className="bg-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-300">
-                    Pytanie {currentNum} / {totalNum}
-                </span>
-                <div className="w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${(currentNum / totalNum) * 100}%` }}></div>
-                </div>
-            </div>
-            
-            <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-white">{data.question}</h2>
-            
-            {renderContent()}
-        </div>
-    );
-};
+    <!-- Główny kod aplikacji -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-const Results = ({ userData, answers, onReset }) => {
-    // --- KONFIGURACJA API GOOGLE SHEETS ---
-    // Instrukcja w odpowiedzi poniżej powie Ci skąd wziąć ten link.
-    // Zastąp poniższy ciąg znaków swoim linkiem.
-    const GOOGLE_SCRIPT_URL = "WKLEJ_TUTAJ_SWOJ_LINK_DO_GOOGLE_APPS_SCRIPT"; 
+        // --- DANE QUIZU (20 PYTAŃ) ---
+        const QUIZ_DATA = [
+            { id: 1, type: 'single-image', question: 'Czy to zdjęcie przedstawia prawdziwą osobę?', correct: 'ai', src: 'https://placehold.co/600x400/2563eb/FFF?text=Twarz+Kobiety+(Placeholder)', label: 'Twarz Kobiety' },
+            { id: 2, type: 'single-image', question: 'Czy ten krajobraz jest generowany przez AI?', correct: 'real', src: 'https://placehold.co/600x400/16a34a/FFF?text=Las+Deszczowy+(Placeholder)', label: 'Las Deszczowy' },
+            { id: 3, type: 'single-image', question: 'Czy ten obraz to sztuka cyfrowa czy AI?', correct: 'ai', src: 'https://placehold.co/600x400/9333ea/FFF?text=Abstrakcja+(Placeholder)', label: 'Abstrakcja' },
+            { id: 4, type: 'single-image', question: 'Prawdziwe zdjęcie czy wygenerowane?', correct: 'ai', src: 'https://placehold.co/600x400/ea580c/FFF?text=Samochód+Przyszłości', label: 'Futurystyczne Auto' },
+            { id: 5, type: 'single-image', question: 'Czy to zdjęcie z wakacji jest prawdziwe?', correct: 'real', src: 'https://placehold.co/600x400/0ea5e9/FFF?text=Plaża', label: 'Plaża' },
 
-    const [status, setStatus] = useState('pending'); // pending, sending, success, error
+            { id: 6, type: 'compare-image', question: 'Które zdjęcie psa zostało wygenerowane przez AI?', correct: 'left', srcLeft: 'https://placehold.co/400x400/f59e0b/FFF?text=Pies+A+(AI)', srcRight: 'https://placehold.co/400x400/84cc16/FFF?text=Pies+B+(Real)', label: 'Psy' },
+            { id: 7, type: 'compare-image', question: 'Wskaż prawdziwe zdjęcie architektury.', correct: 'right', srcLeft: 'https://placehold.co/400x400/64748b/FFF?text=Budynek+A+(AI)', srcRight: 'https://placehold.co/400x400/475569/FFF?text=Budynek+B+(Real)', label: 'Budynki' },
+            { id: 8, type: 'compare-image', question: 'Który portret jest prawdziwy?', correct: 'left', srcLeft: 'https://placehold.co/400x400/ec4899/FFF?text=Portret+A+(Real)', srcRight: 'https://placehold.co/400x400/d946ef/FFF?text=Portret+B+(AI)', label: 'Portrety' },
+            { id: 9, type: 'compare-image', question: 'Które jedzenie to AI?', correct: 'right', srcLeft: 'https://placehold.co/400x400/ef4444/FFF?text=Pizza+A+(Real)', srcRight: 'https://placehold.co/400x400/f97316/FFF?text=Pizza+B+(AI)', label: 'Jedzenie' },
+            { id: 10, type: 'compare-image', question: 'Wskaż zdjęcie wygenerowane przez Midjourney.', correct: 'left', srcLeft: 'https://placehold.co/400x400/14b8a6/FFF?text=Krajobraz+A+(AI)', srcRight: 'https://placehold.co/400x400/06b6d4/FFF?text=Krajobraz+B+(Real)', label: 'Góry' },
 
-    let score = 0;
-    const detailedResults = answers.map((ans, index) => {
-        const question = QUIZ_DATA[index];
-        let isCorrect = false;
+            { id: 11, type: 'single-video', question: 'Czy ta wypowiedź polityka to Deepfake?', correct: 'deepfake', src: 'https://placehold.co/600x400/000000/FFF?text=VIDEO:+Wypowiedź+Polityka', label: 'Wideo Polityka' },
+            { id: 12, type: 'single-video', question: 'Czy ten film z celebrytą jest prawdziwy?', correct: 'real', src: 'https://placehold.co/600x400/333333/FFF?text=VIDEO:+Wywiad', label: 'Wywiad TV' },
+            { id: 13, type: 'single-video', question: 'Czy to nagranie z monitoringu jest autentyczne?', correct: 'real', src: 'https://placehold.co/600x400/111111/FFF?text=VIDEO:+CCTV', label: 'Kamera CCTV' },
+            { id: 14, type: 'single-video', question: 'Deepfake czy prawdziwe nagranie TikTok?', correct: 'deepfake', src: 'https://placehold.co/600x400/222222/FFF?text=VIDEO:+TikTok+Taniec', label: 'TikTok' },
+            { id: 15, type: 'single-video', question: 'Czy ten lektor to synteza mowy (AI)?', correct: 'ai-voice', src: 'https://placehold.co/600x400/444444/FFF?text=AUDIO/VIDEO:+Lektor', label: 'Reklama' },
 
-        if (question.type === 'single-image') {
-            isCorrect = ans === question.correct;
-        } else if (question.type === 'single-video') {
-             const userIsSkeptical = ans === 'deepfake'; 
-             const contentIsFake = question.correct !== 'real';
-             isCorrect = userIsSkeptical === contentIsFake;
-        } else {
-            isCorrect = ans === question.correct;
-        }
+            { id: 16, type: 'compare-video', question: 'Które wideo przedstawia prawdziwego człowieka?', correct: 'left', srcLeft: 'https://placehold.co/400x300/000/FFF?text=Vid+A+(Real)', srcRight: 'https://placehold.co/400x300/111/FFF?text=Vid+B+(AI)', label: 'Prezenterzy' },
+            { id: 17, type: 'compare-video', question: 'Która animacja została stworzona przez AI?', correct: 'right', srcLeft: 'https://placehold.co/400x300/222/FFF?text=Anim+A+(Ręczna)', srcRight: 'https://placehold.co/400x300/333/FFF?text=Anim+B+(Sora/AI)', label: 'Animacja' },
+            { id: 18, type: 'compare-video', question: 'Wskaż Deepfake.', correct: 'right', srcLeft: 'https://placehold.co/400x300/444/FFF?text=Vid+A+(Real)', srcRight: 'https://placehold.co/400x300/555/FFF?text=Vid+B+(Deepfake)', label: 'Aktorzy' },
+            { id: 19, type: 'compare-video', question: 'Który głos lektora jest ludzki?', correct: 'left', srcLeft: 'https://placehold.co/400x300/666/FFF?text=Audio+A+(Ludzki)', srcRight: 'https://placehold.co/400x300/777/FFF?text=Audio+B+(ElevenLabs)', label: 'Audiobook' },
+            { id: 20, type: 'compare-image', question: 'Ostatnie pytanie: Które zdjęcie profilowe jest fałszywe?', correct: 'right', srcLeft: 'https://placehold.co/400x400/888/FFF?text=Profil+A+(Real)', srcRight: 'https://placehold.co/400x400/999/FFF?text=Profil+B+(GAN)', label: 'LinkedIn' },
+        ];
 
-        if (isCorrect) score++;
+        const IntroForm = ({ onStart }) => {
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', age: '' });
 
-        return { id: question.id, isCorrect };
-    });
-
-    const percentage = Math.round((score / QUIZ_DATA.length) * 100);
-
-    // Automatyczna wysyłka po załadowaniu komponentu
-    useEffect(() => {
-        const sendData = async () => {
-            if (GOOGLE_SCRIPT_URL.includes("WKLEJ_TUTAJ")) {
-                setStatus('not_configured');
-                return;
-            }
-
-            setStatus('sending');
-
-            // Przygotowanie danych (każde pytanie osobno)
-            const answerMap = {};
-            detailedResults.forEach((r, i) => {
-                // Klucz to np. Q1, Q2... wartość to 1 (dobrze) lub 0 (źle)
-                answerMap[`Q${i + 1}`] = r.isCorrect ? "1" : "0"; 
-            });
-
-            const payload = {
-                timestamp: new Date().toISOString(),
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                age: userData.age,
-                score: score,
-                total: QUIZ_DATA.length,
-                percentage: percentage + "%",
-                ...answerMap // Rozpakowanie odpowiedzi Q1, Q2...
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.firstName && formData.lastName && formData.age) {
+                    onStart(formData);
+                }
             };
 
-            try {
-                // Wysyłamy POSTem
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Ważne dla Google Apps Script
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                setStatus('success');
-            } catch (error) {
-                console.error("Błąd wysyłania:", error);
-                setStatus('error');
-            }
+            return (
+                <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 animate-fadeIn text-center max-w-lg mx-auto mt-10">
+                    <div className="mb-6 flex justify-center text-blue-400">
+                        <i className="fa-solid fa-robot text-6xl"></i>
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2 text-white">Test: Człowiek czy AI?</h1>
+                    <p className="text-slate-400 mb-8">Sprawdź, czy potrafisz odróżnić rzeczywistość od fikcji. 20 pytań.</p>
+                    
+                    <form onSubmit={handleSubmit} className="space-y-4 text-left">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Imię</label>
+                            <input 
+                                type="text" 
+                                required
+                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                placeholder="Wpisz imię"
+                                value={formData.firstName}
+                                onChange={e => setFormData({...formData, firstName: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Nazwisko</label>
+                            <input 
+                                type="text" 
+                                required
+                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                placeholder="Wpisz nazwisko"
+                                value={formData.lastName}
+                                onChange={e => setFormData({...formData, lastName: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Wiek</label>
+                            <input 
+                                type="number" 
+                                required
+                                min="5" max="100"
+                                className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                placeholder="Wpisz wiek"
+                                value={formData.age}
+                                onChange={e => setFormData({...formData, age: e.target.value})}
+                            />
+                        </div>
+                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition transform hover:scale-105 mt-4 flex items-center justify-center gap-2">
+                            Rozpocznij Test <i className="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+            );
         };
 
-        sendData();
-    }, []);
+        const QuizQuestion = ({ data, currentNum, totalNum, onAnswer }) => {
+            const renderContent = () => {
+                if (data.type === 'single-image' || data.type === 'single-video') {
+                    const isVideo = data.type === 'single-video';
+                    return (
+                        <div className="flex flex-col items-center">
+                            <div className="relative w-full max-w-lg mb-6 rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg group bg-slate-900">
+                                <img src={data.src} alt="Test media" className="w-full h-auto object-cover opacity-90" />
+                                {isVideo && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                        <i className="fa-solid fa-circle-play text-6xl text-white/80"></i>
+                                    </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 bg-black/70 px-3 py-1 text-xs text-white">Przykład #{data.id}</div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+                                <button onClick={() => onAnswer('real')} className="bg-green-600/20 border-2 border-green-600 hover:bg-green-600 hover:text-white text-green-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
+                                    <i className="fa-solid fa-circle-check text-3xl"></i>
+                                    <span>Prawdziwe</span>
+                                </button>
+                                <button onClick={() => onAnswer(data.type === 'single-video' ? 'deepfake' : 'ai')} className="bg-purple-600/20 border-2 border-purple-600 hover:bg-purple-600 hover:text-white text-purple-400 font-bold py-4 rounded-xl transition flex flex-col items-center gap-2">
+                                    <i className="fa-solid fa-robot text-3xl"></i>
+                                    <span>{data.type === 'single-video' ? 'Deepfake/AI' : 'AI Generowane'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                } 
+                
+                else if (data.type === 'compare-image' || data.type === 'compare-video') {
+                    const isVideo = data.type === 'compare-video';
+                    return (
+                        <div className="flex flex-col items-center w-full">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
+                                {/* Opcja Lewa */}
+                                <div onClick={() => onAnswer('left')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
+                                    <img src={data.srcLeft} className="w-full h-48 md:h-64 object-cover" />
+                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-solid fa-play text-4xl text-white"></i></div>}
+                                    <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">A</div>
+                                    <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
+                                </div>
 
-    let feedbackColor = percentage > 70 ? "text-green-400" : (percentage > 40 ? "text-yellow-400" : "text-red-400");
-    let feedbackText = percentage > 70 ? "Ekspert AI!" : (percentage > 40 ? "Nieźle, ale uważaj." : "Łatwo Cię oszukać.");
+                                {/* Opcja Prawa */}
+                                <div onClick={() => onAnswer('right')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
+                                    <img src={data.srcRight} className="w-full h-48 md:h-64 object-cover" />
+                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-solid fa-play text-4xl text-white"></i></div>}
+                                    <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">B</div>
+                                    <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
+                                </div>
+                            </div>
+                            <p className="text-slate-400 text-sm mb-2">Kliknij na obrazek/film, który Twoim zdaniem pasuje do pytania.</p>
+                        </div>
+                    );
+                }
+            };
 
-    return (
-        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 animate-[fadeIn_0.5s_ease-in-out] w-full max-w-lg mt-6 text-center">
-            <h2 className="text-3xl font-bold mb-6 text-white">Twój Wynik</h2>
-            
-            <div className={`text-8xl font-bold ${feedbackColor} mb-4 drop-shadow-2xl`}>
-                {percentage}%
-            </div>
-            
-            <p className={`text-2xl font-bold mb-8 ${feedbackColor}`}>{feedbackText}</p>
+            return (
+                <div className="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl border border-slate-700 w-full animate-fadeIn mt-6 max-w-4xl">
+                    <div className="flex justify-between items-center mb-6">
+                        <span className="bg-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-300">
+                            Pytanie {currentNum} / {totalNum}
+                        </span>
+                        <div className="w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${(currentNum / totalNum) * 100}%` }}></div>
+                        </div>
+                    </div>
+                    
+                    <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-white">{data.question}</h2>
+                    
+                    {renderContent()}
+                </div>
+            );
+        };
 
-            <div className="text-slate-400 text-sm mb-6 bg-slate-900/50 p-4 rounded-lg">
-                <p className="font-bold mb-2">Status zapisu wyników:</p>
-                {status === 'sending' && <p className="animate-pulse">⏳ Wysyłanie do bazy...</p>}
-                {status === 'success' && <p className="text-green-400 font-bold">✅ Wyniki zostały zapisane w arkuszu!</p>}
-                {status === 'error' && <p className="text-red-400">❌ Błąd połączenia z arkuszem.</p>}
-                {status === 'not_configured' && <p className="text-yellow-500 opacity-80">⚠️ Tryb demo (brak linku do API w kodzie)</p>}
-            </div>
+        const Results = ({ userData, answers, onReset }) => {
+            // --- KONFIGURACJA API GOOGLE SHEETS ---
+            // Wklej tutaj link do Web Appa z Google Apps Script
+            const GOOGLE_SCRIPT_URL = "WKLEJ_TUTAJ_SWOJ_LINK_DO_GOOGLE_APPS_SCRIPT"; 
 
-            <button onClick={onReset} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition">
-                Zakończ / Nowy Test
-            </button>
-        </div>
-    );
-};
+            const [status, setStatus] = useState('pending'); // pending, sending, success, error
 
-export default function App() {
-    const [step, setStep] = useState('intro');
-    const [userData, setUserData] = useState(null);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState([]);
+            let score = 0;
+            const detailedResults = answers.map((ans, index) => {
+                const question = QUIZ_DATA[index];
+                let isCorrect = false;
 
-    const startQuiz = (data) => {
-        setUserData(data);
-        setStep('quiz');
-        setCurrentQuestionIndex(0);
-        setAnswers([]);
-    };
+                if (question.type === 'single-image') {
+                    isCorrect = ans === question.correct;
+                } else if (question.type === 'single-video') {
+                     const userIsSkeptical = ans === 'deepfake'; 
+                     const contentIsFake = question.correct !== 'real';
+                     isCorrect = userIsSkeptical === contentIsFake;
+                } else {
+                    isCorrect = ans === question.correct;
+                }
 
-    const handleAnswer = (answer) => {
-        const newAnswers = [...answers, answer];
-        setAnswers(newAnswers);
+                if (isCorrect) score++;
 
-        if (currentQuestionIndex < QUIZ_DATA.length - 1) {
-            setTimeout(() => {
-                setCurrentQuestionIndex(currentQuestionIndex + 1);
-            }, 200);
-        } else {
-            setStep('results');
-        }
-    };
+                return { id: question.id, isCorrect };
+            });
 
-    const resetQuiz = () => {
-        setUserData(null);
-        setAnswers([]);
-        setCurrentQuestionIndex(0);
-        setStep('intro');
-    };
+            const percentage = Math.round((score / QUIZ_DATA.length) * 100);
 
-    return (
-        <div className="bg-slate-900 min-h-screen text-slate-100 flex items-center justify-center p-4">
-            {step === 'intro' && <IntroForm onStart={startQuiz} />}
-            
-            {step === 'quiz' && (
-                <QuizQuestion 
-                    data={QUIZ_DATA[currentQuestionIndex]} 
-                    currentNum={currentQuestionIndex + 1}
-                    totalNum={QUIZ_DATA.length}
-                    onAnswer={handleAnswer}
-                />
-            )}
+            // Automatyczna wysyłka po załadowaniu komponentu
+            useEffect(() => {
+                const sendData = async () => {
+                    if (GOOGLE_SCRIPT_URL.includes("WKLEJ_TUTAJ")) {
+                        setStatus('not_configured');
+                        return;
+                    }
 
-            {step === 'results' && (
-                <Results 
-                    userData={userData} 
-                    answers={answers} 
-                    onReset={resetQuiz}
-                />
-            )}
-        </div>
-    );
-}
+                    setStatus('sending');
+
+                    const answerMap = {};
+                    detailedResults.forEach((r, i) => {
+                        answerMap[`Q${i + 1}`] = r.isCorrect ? "1" : "0"; 
+                    });
+
+                    const payload = {
+                        timestamp: new Date().toISOString(),
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                        age: userData.age,
+                        score: score,
+                        total: QUIZ_DATA.length,
+                        percentage: percentage + "%",
+                        ...answerMap
+                    };
+
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        setStatus('success');
+                    } catch (error) {
+                        console.error("Błąd wysyłania:", error);
+                        setStatus('error');
+                    }
+                };
+
+                sendData();
+            }, []);
+
+            let feedbackColor = percentage > 70 ? "text-green-400" : (percentage > 40 ? "text-yellow-400" : "text-red-400");
+            let feedbackText = percentage > 70 ? "Ekspert AI!" : (percentage > 40 ? "Nieźle, ale uważaj." : "Łatwo Cię oszukać.");
+
+            return (
+                <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 animate-fadeIn w-full max-w-lg mt-6 text-center">
+                    <h2 className="text-3xl font-bold mb-6 text-white">Twój Wynik</h2>
+                    
+                    <div className={`text-8xl font-bold ${feedbackColor} mb-4 drop-shadow-2xl`}>
+                        {percentage}%
+                    </div>
+                    
+                    <p className={`text-2xl font-bold mb-8 ${feedbackColor}`}>{feedbackText}</p>
+
+                    <div className="text-slate-400 text-sm mb-6 bg-slate-900/50 p-4 rounded-lg">
+                        <p className="font-bold mb-2">Status zapisu wyników:</p>
+                        {status === 'sending' && <p className="animate-pulse">⏳ Wysyłanie do bazy...</p>}
+                        {status === 'success' && <p className="text-green-400 font-bold">✅ Wyniki zostały zapisane w arkuszu!</p>}
+                        {status === 'error' && <p className="text-red-400">❌ Błąd połączenia z arkuszem.</p>}
+                        {status === 'not_configured' && <p className="text-yellow-500 opacity-80">⚠️ Tryb demo (brak linku do API w kodzie)</p>}
+                    </div>
+
+                    <button onClick={onReset} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition">
+                        Zakończ / Nowy Test
+                    </button>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [step, setStep] = useState('intro');
+            const [userData, setUserData] = useState(null);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [answers, setAnswers] = useState([]);
+
+            const startQuiz = (data) => {
+                setUserData(data);
+                setStep('quiz');
+                setCurrentQuestionIndex(0);
+                setAnswers([]);
+            };
+
+            const handleAnswer = (answer) => {
+                const newAnswers = [...answers, answer];
+                setAnswers(newAnswers);
+
+                if (currentQuestionIndex < QUIZ_DATA.length - 1) {
+                    setTimeout(() => {
+                        setCurrentQuestionIndex(currentQuestionIndex + 1);
+                    }, 200);
+                } else {
+                    setStep('results');
+                }
+            };
+
+            const resetQuiz = () => {
+                setUserData(null);
+                setAnswers([]);
+                setCurrentQuestionIndex(0);
+                setStep('intro');
+            };
+
+            return (
+                <React.Fragment>
+                    {step === 'intro' && <IntroForm onStart={startQuiz} />}
+                    
+                    {step === 'quiz' && (
+                        <QuizQuestion 
+                            data={QUIZ_DATA[currentQuestionIndex]} 
+                            currentNum={currentQuestionIndex + 1}
+                            totalNum={QUIZ_DATA.length}
+                            onAnswer={handleAnswer}
+                        />
+                    )}
+
+                    {step === 'results' && (
+                        <Results 
+                            userData={userData} 
+                            answers={answers} 
+                            onReset={resetQuiz}
+                        />
+                    )}
+                </React.Fragment>
+            );
+        };
+
+        // Renderowanie aplikacji (wersja dla przeglądarki bez bundlera)
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
