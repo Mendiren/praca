@@ -3,36 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Rozpoznawania AI</title>
+    <title>Test: Człowiek czy AI?</title>
     
-    <!-- React & ReactDOM (Silnik aplikacji) -->
+    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel (Tłumacz kodu w przeglądarce) -->
+    <!-- Babel (do tłumaczenia kodu React w przeglądarce) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Tailwind CSS (Wygląd) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Ikony FontAwesome (Działają bez importów) -->
+    <!-- FontAwesome (Ikony zamiast Lucide) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        /* Animacje */
+        /* Animacje Tailwind Custom */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Kontener aplikacji -->
     <div id="root" class="w-full flex justify-center"></div>
 
-    <!-- Główny kod aplikacji -->
     <script type="text/babel">
         const { useState, useEffect } = React;
 
@@ -134,7 +132,7 @@
                                 <img src={data.src} alt="Test media" className="w-full h-auto object-cover opacity-90" />
                                 {isVideo && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                        <i className="fa-solid fa-circle-play text-6xl text-white/80"></i>
+                                        <i className="fa-regular fa-circle-play text-6xl text-white/80"></i>
                                     </div>
                                 )}
                                 <div className="absolute bottom-0 left-0 bg-black/70 px-3 py-1 text-xs text-white">Przykład #{data.id}</div>
@@ -161,16 +159,16 @@
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
                                 {/* Opcja Lewa */}
                                 <div onClick={() => onAnswer('left')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
-                                    <img src={data.srcLeft} className="w-full h-48 md:h-64 object-cover" />
-                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-solid fa-play text-4xl text-white"></i></div>}
+                                    <img src={data.srcLeft} className="w-full h-48 md:h-64 object-cover" alt="Option A" />
+                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-regular fa-circle-play text-4xl text-white"></i></div>}
                                     <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">A</div>
                                     <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
                                 </div>
 
                                 {/* Opcja Prawa */}
                                 <div onClick={() => onAnswer('right')} className="cursor-pointer group relative rounded-xl overflow-hidden border-4 border-transparent hover:border-blue-500 transition transform hover:scale-[1.02] bg-slate-900">
-                                    <img src={data.srcRight} className="w-full h-48 md:h-64 object-cover" />
-                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-solid fa-play text-4xl text-white"></i></div>}
+                                    <img src={data.srcRight} className="w-full h-48 md:h-64 object-cover" alt="Option B" />
+                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><i className="fa-regular fa-circle-play text-4xl text-white"></i></div>}
                                     <div className="absolute top-2 left-2 bg-slate-900/80 px-3 py-1 rounded text-sm font-bold text-white">B</div>
                                     <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/20 transition"></div>
                                 </div>
@@ -201,10 +199,10 @@
 
         const Results = ({ userData, answers, onReset }) => {
             // --- KONFIGURACJA API GOOGLE SHEETS ---
-            // Wklej tutaj link do Web Appa z Google Apps Script
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzR9Rr9D-2LnIjSckpOUJpXxw1rFjc58NULgMz2s7461yZ33xnHsrTOo0CEVgLJY9TB/exec"; 
 
             const [status, setStatus] = useState('pending'); // pending, sending, success, error
+            const [debugMsg, setDebugMsg] = useState('');
 
             let score = 0;
             const detailedResults = answers.map((ans, index) => {
@@ -214,62 +212,65 @@
                 if (question.type === 'single-image') {
                     isCorrect = ans === question.correct;
                 } else if (question.type === 'single-video') {
-                     const userIsSkeptical = ans === 'deepfake'; 
-                     const contentIsFake = question.correct !== 'real';
-                     isCorrect = userIsSkeptical === contentIsFake;
+                    const userIsSkeptical = ans === 'deepfake'; 
+                    const contentIsFake = question.correct !== 'real';
+                    isCorrect = userIsSkeptical === contentIsFake;
                 } else {
                     isCorrect = ans === question.correct;
                 }
 
                 if (isCorrect) score++;
-
                 return { id: question.id, isCorrect };
             });
 
             const percentage = Math.round((score / QUIZ_DATA.length) * 100);
 
-            // Automatyczna wysyłka po załadowaniu komponentu
-            useEffect(() => {
-                const sendData = async () => {
-                    if (GOOGLE_SCRIPT_URL.includes("WKLEJ_TUTAJ")) {
-                        setStatus('not_configured');
-                        return;
-                    }
+            const sendData = async () => {
+                if (GOOGLE_SCRIPT_URL.includes("WKLEJ_TUTAJ")) {
+                    setStatus('not_configured');
+                    return;
+                }
 
-                    setStatus('sending');
+                setStatus('sending');
+                setDebugMsg('Przygotowywanie danych...');
 
-                    const answerMap = {};
-                    detailedResults.forEach((r, i) => {
-                        answerMap[`Q${i + 1}`] = r.isCorrect ? "1" : "0"; 
-                    });
+                const answerMap = {};
+                detailedResults.forEach((r, i) => {
+                    answerMap[`Q${i + 1}`] = r.isCorrect ? "1" : "0"; 
+                });
 
-                    const payload = {
-                        timestamp: new Date().toISOString(),
-                        firstName: userData.firstName,
-                        lastName: userData.lastName,
-                        age: userData.age,
-                        score: score,
-                        total: QUIZ_DATA.length,
-                        percentage: percentage + "%",
-                        ...answerMap
-                    };
-
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        setStatus('success');
-                    } catch (error) {
-                        console.error("Błąd wysyłania:", error);
-                        setStatus('error');
-                    }
+                const payload = {
+                    timestamp: new Date().toISOString(),
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    age: userData.age,
+                    score: score,
+                    total: QUIZ_DATA.length,
+                    percentage: percentage + "%",
+                    ...answerMap
                 };
 
+                try {
+                    // Tryb no-cors jest kluczowy dla skryptów Google Sheets bez backendu
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', 
+                        headers: {
+                            'Content-Type': 'text/plain', 
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    setStatus('success');
+                    setDebugMsg('Wysłano pomyślnie.');
+                } catch (error) {
+                    console.error("Błąd wysyłania:", error);
+                    setStatus('error');
+                    setDebugMsg(`Błąd: ${error.message}`);
+                }
+            };
+
+            useEffect(() => {
                 sendData();
             }, []);
 
@@ -286,16 +287,32 @@
                     
                     <p className={`text-2xl font-bold mb-8 ${feedbackColor}`}>{feedbackText}</p>
 
-                    <div className="text-slate-400 text-sm mb-6 bg-slate-900/50 p-4 rounded-lg">
-                        <p className="font-bold mb-2">Status zapisu wyników:</p>
-                        {status === 'sending' && <p className="animate-pulse">⏳ Wysyłanie do bazy...</p>}
-                        {status === 'success' && <p className="text-green-400 font-bold">✅ Wyniki zostały zapisane w arkuszu!</p>}
-                        {status === 'error' && <p className="text-red-400">❌ Błąd połączenia z arkuszem.</p>}
-                        {status === 'not_configured' && <p className="text-yellow-500 opacity-80">⚠️ Tryb demo (brak linku do API w kodzie)</p>}
+                    <div className="bg-slate-900/80 p-6 rounded-xl mb-6 border border-slate-700 text-left">
+                        <h3 className="text-slate-300 font-bold mb-3 flex items-center gap-2">
+                            <i className="fa-solid fa-chart-bar"></i> Statystyki
+                        </h3>
+                        <div className="space-y-2 text-sm text-slate-400">
+                            <p className="flex justify-between"><span>Imię:</span> <span className="text-white">{userData.firstName} {userData.lastName}</span></p>
+                            <p className="flex justify-between"><span>Poprawne:</span> <span className="text-white">{score} / {QUIZ_DATA.length}</span></p>
+                            
+                            <div className="pt-2 border-t border-slate-700 mt-2">
+                                <p className="font-bold mb-1 text-xs uppercase tracking-wider text-slate-500">Status zapisu (Google Sheets):</p>
+                                {status === 'sending' && <p className="text-blue-400 animate-pulse flex items-center gap-2"><i className="fa-solid fa-paper-plane"></i> Wysyłanie...</p>}
+                                {status === 'success' && <p className="text-green-400 font-bold flex items-center gap-2"><i className="fa-solid fa-circle-check"></i> Zapisano w arkuszu!</p>}
+                                {status === 'error' && (
+                                    <div>
+                                        <p className="text-red-400 flex items-center gap-2"><i className="fa-solid fa-circle-xmark"></i> Błąd połączenia.</p>
+                                        <p className="text-xs text-red-500 mt-1">{debugMsg}</p>
+                                        <button onClick={sendData} className="mt-2 text-xs bg-red-900/50 hover:bg-red-900 text-red-200 px-2 py-1 rounded">Ponów próbę</button>
+                                    </div>
+                                )}
+                                {status === 'not_configured' && <p className="text-yellow-500 opacity-80 flex items-center gap-2"><i className="fa-solid fa-triangle-exclamation"></i> Tryb demo (brak URL)</p>}
+                            </div>
+                        </div>
                     </div>
 
-                    <button onClick={onReset} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition">
-                        Zakończ / Nowy Test
+                    <button onClick={onReset} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                        <i className="fa-solid fa-rotate-left"></i> Zakończ / Nowy Test
                     </button>
                 </div>
             );
@@ -320,7 +337,7 @@
 
                 if (currentQuestionIndex < QUIZ_DATA.length - 1) {
                     setTimeout(() => {
-                        setCurrentQuestionIndex(currentQuestionIndex + 1);
+                        setCurrentQuestionIndex(prev => prev + 1);
                     }, 200);
                 } else {
                     setStep('results');
@@ -347,7 +364,7 @@
                         />
                     )}
 
-                    {step === 'results' && (
+                    {step === 'results' && userData && (
                         <Results 
                             userData={userData} 
                             answers={answers} 
@@ -358,10 +375,8 @@
             );
         };
 
-        // Renderowanie aplikacji (wersja dla przeglądarki bez bundlera)
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>
 </html>
-
